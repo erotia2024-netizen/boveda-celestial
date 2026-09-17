@@ -1,9 +1,9 @@
 {
   "app": "boveda-celestial",
   "v": 1,
-  "actualizado": "2026-09-17T17:37:14.603Z",
+  "actualizado": "2026-09-17T17:45:10.697Z",
   "resumen": {
-    "catalogo": 26,
+    "catalogo": 43,
     "mios": 0,
     "capturas": 0,
     "build": 0,
@@ -33,7 +33,8 @@
       "adult": false,
       "autor": "Arthmoor",
       "nota": "Parche base: arregla cientos de bugs. Instálalo el primero.",
-      "img": ""
+      "img": "",
+      "idioma": ""
     },
     {
       "nombre": "Alternate Start - Live Another Life",
@@ -47,7 +48,8 @@
       "adult": false,
       "autor": "Arthmoor",
       "nota": "Elige cómo empiezas la partida y salta la intro.",
-      "img": ""
+      "img": "",
+      "idioma": ""
     },
     {
       "nombre": "Open Cities Skyrim",
@@ -61,7 +63,8 @@
       "adult": false,
       "autor": "Arthmoor",
       "nota": "Abre las ciudades sin pantallas de carga. Pide USSEP.",
-      "img": ""
+      "img": "",
+      "idioma": ""
     },
     {
       "nombre": "The Paarthurnax Dilemma",
@@ -75,7 +78,8 @@
       "adult": false,
       "autor": "Arthmoor",
       "nota": "Podrás perdonar a Paarthurnax sin perder misiones.",
-      "img": ""
+      "img": "",
+      "idioma": ""
     },
     {
       "nombre": "Ars Metallica - Smithing Enhancement",
@@ -89,7 +93,8 @@
       "adult": false,
       "autor": "Arthmoor",
       "nota": "Amplía la forja: funde armas y armaduras viejas.",
-      "img": ""
+      "img": "",
+      "idioma": ""
     },
     {
       "nombre": "Point The Way",
@@ -103,7 +108,8 @@
       "adult": false,
       "autor": "Arthmoor",
       "nota": "Carteles de madera en los cruces para orientarte.",
-      "img": ""
+      "img": "",
+      "idioma": ""
     },
     {
       "nombre": "Cutting Room Floor",
@@ -117,7 +123,8 @@
       "adult": false,
       "autor": "Arthmoor",
       "nota": "Devuelve contenido que Bethesda cortó del juego.",
-      "img": ""
+      "img": "",
+      "idioma": ""
     },
     {
       "nombre": "Run For Your Lives",
@@ -131,7 +138,8 @@
       "adult": false,
       "autor": "Arthmoor",
       "nota": "Los aldeanos se refugian cuando ataca un dragón.",
-      "img": ""
+      "img": "",
+      "idioma": ""
     },
     {
       "nombre": "Practice Dummies",
@@ -145,7 +153,8 @@
       "adult": false,
       "autor": "Arthmoor",
       "nota": "Los muñecos de entrenamiento suben tus habilidades.",
-      "img": ""
+      "img": "",
+      "idioma": ""
     },
     {
       "nombre": "Dawnguard Map Markers",
@@ -159,7 +168,8 @@
       "adult": false,
       "autor": "Arthmoor",
       "nota": "Marcadores y viaje rápido en el Alma Cairn.",
-      "img": ""
+      "img": "",
+      "idioma": ""
     },
     {
       "nombre": "Gildergreen Regrown",
@@ -173,7 +183,8 @@
       "adult": false,
       "autor": "Arthmoor",
       "nota": "El Gildergreen de Carrera Blanca vuelve a crecer.",
-      "img": ""
+      "img": "",
+      "idioma": ""
     },
     {
       "nombre": "Manor Roads",
@@ -187,7 +198,8 @@
       "adult": false,
       "autor": "Arthmoor",
       "nota": "Camino de piedra hasta el Salón Heljarchen.",
-      "img": ""
+      "img": "",
+      "idioma": ""
     },
     {
       "nombre": "Kynesgrove",
@@ -201,7 +213,8 @@
       "adult": false,
       "autor": "Arthmoor",
       "nota": "Amplía el pueblito de Kynesgrove con respeto al original.",
-      "img": ""
+      "img": "",
+      "idioma": ""
     },
     {
       "nombre": "Bthar Caverns",
@@ -215,7 +228,8 @@
       "adult": false,
       "autor": "Arthmoor",
       "nota": "Mazmorra nueva de Falmer cerca del Cruce del Pueblo Profundo.",
-      "img": ""
+      "img": "",
+      "idioma": ""
     },
     {
       "nombre": "ESO Skyshards",
@@ -229,7 +243,8 @@
       "adult": false,
       "autor": "Arthmoor",
       "nota": "Coleccionables estilo ESO repartidos por Skyrim.",
-      "img": ""
+      "img": "",
+      "idioma": ""
     },
     {
       "nombre": "Bring Out Your Dead",
@@ -243,7 +258,8 @@
       "adult": false,
       "autor": "Arthmoor",
       "nota": "Cementerios para los NPC que van cayendo.",
-      "img": ""
+      "img": "",
+      "idioma": ""
     },
     {
       "nombre": "Soljund's Sinkhole",
@@ -257,7 +273,8 @@
       "adult": false,
       "autor": "Arthmoor",
       "nota": "Amplía el asentamiento de Soljund's Sinkhole.",
-      "img": ""
+      "img": "",
+      "idioma": ""
     },
     {
       "nombre": "Darkwater Crossing",
@@ -271,7 +288,8 @@
       "adult": false,
       "autor": "Arthmoor",
       "nota": "Amplía la aldea de Darkwater Crossing.",
-      "img": ""
+      "img": "",
+      "idioma": ""
     },
     {
       "nombre": "Shadowmarks",
@@ -285,7 +303,8 @@
       "adult": false,
       "autor": "Arthmoor",
       "nota": "Marca las casas de los gremios con símbolos del Gremio de Ladrones.",
-      "img": ""
+      "img": "",
+      "idioma": ""
     },
     {
       "nombre": "Provincial Courier Service",
@@ -299,7 +318,8 @@
       "adult": false,
       "autor": "Arthmoor",
       "nota": "Oficina de correos con cartero propio.",
-      "img": ""
+      "img": "",
+      "idioma": ""
     },
     {
       "nombre": "Dawnstar",
@@ -313,7 +333,8 @@
       "adult": false,
       "autor": "Arthmoor",
       "nota": "Amplía Dawnstar manteniendo su aire de puerto norteño.",
-      "img": ""
+      "img": "",
+      "idioma": ""
     },
     {
       "nombre": "Bee Hives",
@@ -327,7 +348,8 @@
       "adult": false,
       "autor": "Arthmoor",
       "nota": "Colmenas nuevas para las granjas de hidromiel.",
-      "img": ""
+      "img": "",
+      "idioma": ""
     },
     {
       "nombre": "Karthwasten",
@@ -341,7 +363,8 @@
       "adult": false,
       "autor": "Arthmoor",
       "nota": "Amplía la aldea minera de Karthwasten.",
-      "img": ""
+      "img": "",
+      "idioma": ""
     },
     {
       "nombre": "Dragon Bridge",
@@ -355,7 +378,8 @@
       "adult": false,
       "autor": "Arthmoor",
       "nota": "Amplía la aldea del Puente del Dragón.",
-      "img": ""
+      "img": "",
+      "idioma": ""
     },
     {
       "nombre": "The Horkerpocalypse",
@@ -369,7 +393,8 @@
       "adult": false,
       "autor": "Arthmoor",
       "nota": "Las morsas atacan Skyrim. Caos divertido de Arthmoor.",
-      "img": ""
+      "img": "",
+      "idioma": ""
     },
     {
       "nombre": "Ivarstead",
@@ -383,13 +408,268 @@
       "adult": false,
       "autor": "Arthmoor",
       "nota": "Amplía Ivarstead y el camino al Paso Alto Hrothgar.",
-      "img": ""
+      "img": "",
+      "idioma": ""
+    },
+    {
+      "nombre": "Immersive Citizens - AI Overhaul",
+      "id": 173,
+      "dl": 24.3,
+      "mb": 1.8,
+      "deps": 0,
+      "fam": "Ninguna",
+      "cat": "Immersion",
+      "plat": "PS4+PS5",
+      "adult": false,
+      "autor": "Arnaud d'Orchymont",
+      "nota": "Inmersión de NPCs: rutinas diarias y reacciones realistas al entrar en las ciudades.",
+      "img": "",
+      "idioma": ""
+    },
+    {
+      "nombre": "Faster Leveling",
+      "id": 0,
+      "dl": 24.4,
+      "mb": 0,
+      "deps": 0,
+      "fam": "Ninguna",
+      "cat": "Skills and Leveling",
+      "plat": "PS4+PS5",
+      "adult": false,
+      "autor": "RampageBW1",
+      "nota": "Subir de nivel es mucho más rápido.",
+      "img": "",
+      "idioma": ""
+    },
+    {
+      "nombre": "Craftable Soul Gems",
+      "id": 0,
+      "dl": 0.046,
+      "mb": 0,
+      "deps": 0,
+      "fam": "Ninguna",
+      "cat": "Crafting",
+      "plat": "PS4+PS5",
+      "adult": false,
+      "autor": "RampageBW1",
+      "nota": "Permite fabricar gemas de alma en la forja.",
+      "img": "",
+      "idioma": ""
+    },
+    {
+      "nombre": "Rain and Snow FX",
+      "id": 0,
+      "dl": 14,
+      "mb": 0,
+      "deps": 0,
+      "fam": "Ninguna",
+      "cat": "Visuals",
+      "plat": "PS4+PS5",
+      "adult": false,
+      "autor": "Chesko",
+      "nota": "Efectos de lluvia y nieve sobre el personaje y los NPC.",
+      "img": "",
+      "idioma": ""
+    },
+    {
+      "nombre": "Lore-Based Loading Screens",
+      "id": 1185,
+      "dl": 3.7,
+      "mb": 0.02,
+      "deps": 0,
+      "fam": "Ninguna",
+      "cat": "UI",
+      "plat": "PS4+PS5",
+      "adult": false,
+      "autor": "Chesko",
+      "nota": "Añade más de 160 pantallas de carga con sabor a la lore de Tamriel.",
+      "img": "",
+      "idioma": ""
+    },
+    {
+      "nombre": "Rich Merchants of Skyrim: Special Edition",
+      "id": 0,
+      "dl": 11,
+      "mb": 0,
+      "deps": 0,
+      "fam": "Ninguna",
+      "cat": "Cheats",
+      "plat": "PS4+PS5",
+      "adult": false,
+      "autor": "Micahghost",
+      "nota": "Los mercaderes tienen mucho más oro para comerciar.",
+      "img": "",
+      "idioma": ""
+    },
+    {
+      "nombre": "Lampposts of Skyrim: Special Edition",
+      "id": 0,
+      "dl": 8.2,
+      "mb": 0,
+      "deps": 0,
+      "fam": "Ninguna",
+      "cat": "Items and Objects - World",
+      "plat": "PS4+PS5",
+      "adult": false,
+      "autor": "Micahghost",
+      "nota": "Farolas de verdad en los caminos y las ciudades.",
+      "img": "",
+      "idioma": ""
+    },
+    {
+      "nombre": "Bridges of Skyrim",
+      "id": 0,
+      "dl": 3.6,
+      "mb": 0,
+      "deps": 0,
+      "fam": "Ninguna",
+      "cat": "Environmental",
+      "plat": "PS4+PS5",
+      "adult": false,
+      "autor": "Micahghost",
+      "nota": "Sustituye los puentes del juego por otros de piedra mejores.",
+      "img": "",
+      "idioma": ""
+    },
+    {
+      "nombre": "Go Away Map Clouds!",
+      "id": 0,
+      "dl": 3.6,
+      "mb": 0,
+      "deps": 0,
+      "fam": "Ninguna",
+      "cat": "UI",
+      "plat": "PS4+PS5",
+      "adult": false,
+      "autor": "Micahghost",
+      "nota": "Quita las nubes del mapa. Conviene ponerlo al final del load order.",
+      "img": "",
+      "idioma": ""
+    },
+    {
+      "nombre": "Ring Of Increased Carry Weight",
+      "id": 0,
+      "dl": 2.8,
+      "mb": 0,
+      "deps": 0,
+      "fam": "Ninguna",
+      "cat": "Cheats",
+      "plat": "PS4+PS5",
+      "adult": false,
+      "autor": "Micahghost",
+      "nota": "Un anillo que da 1000 puntos de capacidad de carga.",
+      "img": "",
+      "idioma": ""
+    },
+    {
+      "nombre": "Unlimited Rings and Amulets",
+      "id": 0,
+      "dl": 2.8,
+      "mb": 0,
+      "deps": 0,
+      "fam": "Ninguna",
+      "cat": "Cheats",
+      "plat": "PS4+PS5",
+      "adult": false,
+      "autor": "Micahghost",
+      "nota": "Puedes llevar tantos anillos y amuletos como quieras.",
+      "img": "",
+      "idioma": ""
+    },
+    {
+      "nombre": "Volgon Estate",
+      "id": 3254,
+      "dl": 3.1,
+      "mb": 0.45,
+      "deps": 0,
+      "fam": "Ninguna",
+      "cat": "Homes",
+      "plat": "PS4+PS5",
+      "adult": false,
+      "autor": "Micahghost",
+      "nota": "Casa temática enorme para tu personaje.",
+      "img": "",
+      "idioma": ""
+    },
+    {
+      "nombre": "VolForge",
+      "id": 0,
+      "dl": 1.1,
+      "mb": 0,
+      "deps": 0,
+      "fam": "Ninguna",
+      "cat": "Homes",
+      "plat": "PS4+PS5",
+      "adult": false,
+      "autor": "Micahghost",
+      "nota": "Otra casa del creador de Volgon Estate, con su propia fragua.",
+      "img": "",
+      "idioma": ""
+    },
+    {
+      "nombre": "Invincible Dogs of Skyrim",
+      "id": 0,
+      "dl": 1.1,
+      "mb": 0,
+      "deps": 0,
+      "fam": "Ninguna",
+      "cat": "Creatures",
+      "plat": "PS4+PS5",
+      "adult": false,
+      "autor": "Micahghost",
+      "nota": "Los perros con nombre del juego se vuelven invencibles.",
+      "img": "",
+      "idioma": ""
+    },
+    {
+      "nombre": "Less Yellow Filter",
+      "id": 0,
+      "dl": 0.583,
+      "mb": 0,
+      "deps": 0,
+      "fam": "Ninguna",
+      "cat": "Visuals",
+      "plat": "PS4+PS5",
+      "adult": false,
+      "autor": "Micahghost",
+      "nota": "Quita el filtro amarillo y deja colores más neutros.",
+      "img": "",
+      "idioma": ""
+    },
+    {
+      "nombre": "Psiijic Robes",
+      "id": 0,
+      "dl": 0.552,
+      "mb": 0,
+      "deps": 0,
+      "fam": "Ninguna",
+      "cat": "Clothing",
+      "plat": "PS4+PS5",
+      "adult": false,
+      "autor": "Micahghost",
+      "nota": "Añade las túnicas Psiijic a la forja.",
+      "img": "",
+      "idioma": ""
+    },
+    {
+      "nombre": "Isle of Volgon WIP v 2.4",
+      "id": 0,
+      "dl": 0,
+      "mb": 0,
+      "deps": 0,
+      "fam": "Ninguna",
+      "cat": "World",
+      "plat": "PS4+PS5",
+      "adult": false,
+      "autor": "Micahghost",
+      "nota": "Isla nueva todavía en desarrollo. Ojo: es un WIP.",
+      "img": "",
+      "idioma": ""
     }
   ],
   "autores": [],
   "mios": [],
   "capturas": [],
   "rev": {},
-  "mb": {},
-  "idiomas": {}
+  "mb": {}
 }
