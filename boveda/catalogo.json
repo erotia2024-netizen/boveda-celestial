@@ -1,7 +1,7 @@
 {
   "app": "boveda-celestial",
   "v": 1,
-  "actualizado": "2026-09-17T13:44:07.703Z",
+  "actualizado": "2026-09-17T13:44:21.854Z",
   "resumen": {
     "catalogo": 0,
     "mios": 0,
@@ -10,12 +10,12 @@
     "setsCC": 0
   },
   "perfil": {
-    "plataforma": "PS4+PS5",
+    "plataforma": "PS5",
     "familia": "CBBE",
-    "edicion": "SE",
+    "edicion": "AE",
     "assetsPS4": false,
     "presupuestoGB": 16,
-    "mostrar18": false,
+    "mostrar18": true,
     "soloAptos": false
   },
   "build": [],
