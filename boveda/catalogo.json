@@ -1,7 +1,7 @@
 {
   "app": "boveda-celestial",
   "v": 1,
-  "actualizado": "2026-09-17T17:30:47.944Z",
+  "actualizado": "2026-09-17T17:30:58.705Z",
   "resumen": {
     "catalogo": 26,
     "mios": 0,
@@ -391,7 +391,5 @@
   "capturas": [],
   "rev": {},
   "mb": {},
-  "idiomas": {
-    "Alternate Start - Live Another Life": "ES"
-  }
+  "idiomas": {}
 }
