@@ -1,7 +1,7 @@
 {
   "app": "boveda-celestial",
   "v": 1,
-  "actualizado": "2026-09-17T17:25:20.547Z",
+  "actualizado": "2026-09-17T17:30:14.073Z",
   "resumen": {
     "catalogo": 26,
     "mios": 0,
@@ -390,5 +390,8 @@
   "mios": [],
   "capturas": [],
   "rev": {},
-  "mb": {}
+  "mb": {},
+  "idiomas": {
+    "Unofficial Skyrim Special Edition Patch - USSEP": "ES"
+  }
 }
