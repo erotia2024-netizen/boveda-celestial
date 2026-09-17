@@ -1,7 +1,7 @@
 {
   "app": "boveda-celestial",
   "v": 1,
-  "actualizado": "2026-09-17T17:25:08.176Z",
+  "actualizado": "2026-09-17T17:25:20.547Z",
   "resumen": {
     "catalogo": 26,
     "mios": 0,
@@ -386,10 +386,7 @@
       "img": ""
     }
   ],
-  "autores": [
-    "AutorDePrueba",
-    "autor de prueba"
-  ],
+  "autores": [],
   "mios": [],
   "capturas": [],
   "rev": {},
