@@ -1,7 +1,7 @@
 {
   "app": "boveda-celestial",
   "v": 1,
-  "actualizado": "2026-09-17T17:13:28.810Z",
+  "actualizado": "2026-09-17T17:25:08.176Z",
   "resumen": {
     "catalogo": 26,
     "mios": 0,
@@ -385,6 +385,10 @@
       "nota": "Amplía Ivarstead y el camino al Paso Alto Hrothgar.",
       "img": ""
     }
+  ],
+  "autores": [
+    "AutorDePrueba",
+    "autor de prueba"
   ],
   "mios": [],
   "capturas": [],
