@@ -1,7 +1,7 @@
 {
   "app": "boveda-celestial",
   "v": 1,
-  "actualizado": "2026-09-17T13:40:01.925Z",
+  "actualizado": "2026-09-17T13:40:49.300Z",
   "resumen": {
     "catalogo": 0,
     "mios": 0,
@@ -14,7 +14,7 @@
     "familia": "CBBE",
     "edicion": "AE",
     "assetsPS4": false,
-    "presupuestoGB": 16,
+    "presupuestoGB": 17,
     "mostrar18": false,
     "soloAptos": false
   },
