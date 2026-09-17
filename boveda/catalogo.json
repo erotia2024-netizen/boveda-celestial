@@ -1,7 +1,7 @@
 {
   "app": "boveda-celestial",
   "v": 1,
-  "actualizado": "2026-09-17T13:44:21.854Z",
+  "actualizado": "2026-09-17T17:02:47.135Z",
   "resumen": {
     "catalogo": 0,
     "mios": 0,
@@ -15,7 +15,7 @@
     "edicion": "AE",
     "assetsPS4": false,
     "presupuestoGB": 16,
-    "mostrar18": true,
+    "mostrar18": false,
     "soloAptos": false
   },
   "build": [],
