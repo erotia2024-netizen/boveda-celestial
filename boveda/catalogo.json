@@ -1,9 +1,9 @@
 {
   "app": "boveda-celestial",
   "v": 1,
-  "actualizado": "2026-09-17T21:43:59.134Z",
+  "actualizado": "2026-09-19T23:21:40.729Z",
   "resumen": {
-    "catalogo": 543,
+    "catalogo": 544,
     "mios": 0,
     "capturas": 0,
     "build": 0,
@@ -8163,6 +8163,21 @@
       "adult": false,
       "autor": "ImperialAgent1992",
       "nota": "Retexturiza placas nórdicas y armas de acero en tono oscuro brillante.",
+      "img": "",
+      "idioma": ""
+    },
+    {
+      "nombre": "Death Hounds Backp Up",
+      "id": 0,
+      "dl": 0.057,
+      "mb": 0.05,
+      "deps": 0,
+      "fam": "Ninguna",
+      "cat": "Animals",
+      "plat": "PS4+PS5",
+      "adult": false,
+      "autor": "ImperialAgent1992",
+      "nota": "Cuatro sabuesos de la muerte como refuerzo: te siguen a todas partes y suben de nivel contigo.",
       "img": "",
       "idioma": ""
     }
