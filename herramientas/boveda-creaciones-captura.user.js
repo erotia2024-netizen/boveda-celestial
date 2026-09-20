@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Bóveda Celestial · Captura de Creations
 // @namespace    boveda-celestial
-// @version      2.1
+// @version      2.2
 // @description  Rastrea la galería entera de Creations, baja portadas y capturas de cada mod (con su JSON de datos) y lo empaqueta todo en un ZIP
 // @author       Bóveda Celestial
 // @homepageURL  https://github.com/erotia2024-netizen/boveda-celestial
@@ -1129,16 +1129,36 @@
     } catch (e) { return { error: String((e && e.message) || e) }; }
   }
 
-  async function bytesDeImagen(url) {
-    let fallo = "";
+  /* En cola, unos cuantos a la vez: bajar de uno en uno hacía que un rastreo
+     de mil mods con diez imágenes cada uno durase horas. */
+  async function enParalelo(items, cuantos, fn) {
+    let i = 0;
+    const currantes = [];
+    for (let k = 0; k < Math.max(1, Math.min(cuantos, items.length)); k++) {
+      currantes.push((async () => {
+        while (i < items.length) {
+          const j = i++;
+          try { await fn(items[j], j); } catch (e) {}
+        }
+      })());
+    }
+    await Promise.all(currantes);
+  }
+
+  /* un intento de bajada: GM_xmlhttpRequest y, si falla, fetch (sin credenciales
+     y luego con) */
+  async function intentoImagen(url) {
     if (HAY_GM) {
       const g = await bytesPorGM(url);
       if (g.blob) {
         const r = await acabarImagen(g.blob, g.tipo);
         if (!r.error) return r;
-        fallo = r.error;
-      } else fallo = "GM: " + g.error;
-    } else fallo = "sin GM_xmlhttpRequest (mira que Tampermonkey esté activo)";
+        return { error: r.error };
+      }
+      var fallo = "GM: " + g.error;
+    } else {
+      var fallo = "sin GM_xmlhttpRequest (mira que Tampermonkey esté activo)";
+    }
     for (const opciones of [{}, { credentials: "include" }]) {
       let r = null;
       try { r = await fetch(url, opciones); }
@@ -1151,6 +1171,22 @@
       fallo = listo.error;
     }
     return { error: fallo || "no la pude pedir" };
+  }
+
+  /* con reintentos: un corte de red no debe costarme una imagen del lote. Lo que
+     no tiene arreglo (no es imagen, pasa de peso, sin GM) no se reintenta. */
+  const SIN_ARREGLO = /no es imagen|pasa de |sin GM_xmlhttpRequest/;
+  async function bytesDeImagen(url, intentos) {
+    const max = intentos || 3;
+    let ultimo = "", reintentos = 0;
+    for (let k = 0; k < max; k++) {
+      if (k) { reintentos++; await dormir(400 * k * k); }
+      const r = await intentoImagen(url);
+      if (!r.error) { r.reintentos = reintentos; return r; }
+      ultimo = r.error;
+      if (SIN_ARREGLO.test(ultimo)) break;
+    }
+    return { error: ultimo || "no la pude pedir", reintentos: reintentos };
   }
 
   /* resumen de un medio: lo que dice el JSON (clase, medidas, clave...) */
@@ -1241,47 +1277,81 @@
     return { portada: portada, miniatura: mini && mini !== portada ? mini : "", capturas: capturas };
   }
 
-  /* Junta las imágenes de toda la lista. Antes se rascaba la galería pintada y
-     se abría un iframe por ficha; ahora las URLs salen del JSON que la web ya
-     nos ha dado (rápido, para todos y sin depender de la pantalla). Los bytes
-     se piden por GM_xmlhttpRequest porque el CDN no manda CORS. */
-  async function juntarImagenes(lista, fichas, modo, control, di) {
-    const res = { archivos: [], urls: {}, medios: {}, hechas: 0, soloUrl: 0, fallos: [], kb: 0, recortadas: 0, mods: 0, avisos: [], formato: "" };
+  /* Junta las imágenes de toda la lista. Las URLs salen del JSON que la web ya
+     nos ha dado (rápido, para todos y sin depender de la pantalla), y los bytes
+     se piden por GM_xmlhttpRequest porque el CDN no manda CORS. Se bajan de 4 en
+     4 y cada archivo se va metiendo en la salida según llega: en memoria (Blob),
+     a un .zip en disco o a una carpeta de verdad. */
+  async function juntarImagenes(lista, fichas, modo, control, di, salida) {
+    const res = { urls: {}, medios: {}, hechas: 0, soloUrl: 0, fallos: [], kb: 0, recortadas: 0, mods: 0, avisos: [], formato: "", reintentos: 0, saltados: 0 };
     const mods = (lista && lista.mods) || [];
     const cal = calidadImagenes();
     res.formato = cal.fmt + " · portada " + cal.tam.portada + "px · miniatura " + cal.tam.mini + "px · capturas " + cal.tam.captura + "px";
     const conMedios = mods.filter((m) => m && (m.cover_image || m.preview_image));
     if (!conMedios.length) { res.avisos.push("sin-medios"); return res; }
-    di("Imágenes · <b>" + conMedios.length + "</b> mods con portada en el JSON de la galería · " + res.formato);
+    const tope = (salida && salida.tope) || Infinity;
 
+    /* 1) primero se apunta TODO lo que hay que bajar (esto no toca la red) */
     const usados = new Set();
-    let vistos = 0;
+    const trabajos = [];
     for (const m of mods) {
-      if (control && control.parar) break;
       const meds = mediosDeMod(m, modo, cal.fmt, cal.tam);
       if (!meds) continue;
       let base = slugDe(m, usados.size);
       while (usados.has(base)) base = base + "_";
       usados.add(base);
-      vistos++;
       res.mods++;
       res.urls[base] = { titulo: m.title || m.name || "", urls: [meds.portada].concat(meds.miniatura ? [meds.miniatura] : []).concat(meds.capturas) };
       res.medios[claveMod(m)] = [mediaResumen(m.cover_image, "portada"), mediaResumen(m.preview_image, "miniatura")]
         .concat((m.screenshot_images || []).map((s) => mediaResumen(s, "captura"))).filter(Boolean);
       const piezas = [["portada", meds.portada], ["miniatura", meds.miniatura]]
         .concat(meds.capturas.slice(0, Math.max(0, MAX_IMG_POR_MOD - 1)).map((u, n) => ["captura-" + String(n + 1).padStart(2, "0"), u]));
-      di("Imágenes · <b>" + vistos + "</b>/" + conMedios.length + " mods · <b>" + res.hechas + "</b> bajadas (" + Math.round(res.kb / 1024) + " MB de " + Math.round(PESO_MAX_TOTAL / 1048576) + " MB)");
-      for (const [nombre, u] of piezas) {
-        if (!u) continue;
-        if (res.kb * 1024 > PESO_MAX_TOTAL) { if (res.avisos.indexOf("tope") < 0) res.avisos.push("tope"); break; }
-        const b = await bytesDeImagen(u);
-        if (b.error) { res.soloUrl++; res.fallos.push({ mod: base, url: u, motivo: b.error }); continue; }
-        res.archivos.push({ nombre: "imagenes/" + base + "/" + nombre + "." + extDe(u, b.tipo), datos: b.datos });
-        res.hechas++; res.kb += b.kb;
-        if (b.recortada) res.recortadas++;
-        await dormir(15);
-      }
+      for (const pieza of piezas) if (pieza[1]) trabajos.push({ base: base, nombre: pieza[0], url: pieza[1] });
     }
+    if (!trabajos.length) { res.avisos.push("sin-medios"); return res; }
+    di("Imágenes · <b>" + trabajos.length + "</b> archivos de <b>" + res.mods + "</b> mods · " + res.formato);
+
+    /* 2) y ahora se bajan de 4 en 4, escribiendo según llegan */
+    const t0 = Date.now();
+    let hechos = 0;
+    let colaEscritura = Promise.resolve();
+    const escribir = (nombre, datos) => (colaEscritura = colaEscritura.then(async () => {
+      const metido = await salida.meter(nombre, datos);
+      if (metido === false) res.saltados++; else res.hechas++;
+    }));
+    const pinta = () => {
+      const seg = Math.max(0.2, (Date.now() - t0) / 1000);
+      const mb = res.kb / 1024;
+      const ritmo = mb / seg;
+      const faltan = trabajos.length - hechos;
+      const eta = ritmo > 0 && faltan > 0 ? " · quedan ~" + (function () {
+        const s = Math.round(faltan / (hechos / seg));
+        return s > 90 ? Math.round(s / 60) + " min" : s + " s";
+      })() : "";
+      di("Imágenes · <b>" + hechos + "</b>/" + trabajos.length + " · <b>" + res.hechas + "</b> guardadas" +
+        (res.saltados ? " (+" + res.saltados + " ya estaban)" : "") +
+        " · " + (Math.round(mb * 10) / 10) + " MB · " + (Math.round(ritmo * 10) / 10) + " MB/s" + eta +
+        (tope === Infinity ? "" : " de " + Math.round(tope / 1048576) + " MB"));
+    };
+
+    await enParalelo(trabajos, 4, async (t) => {
+      if (control && control.parar) return;
+      if (res.kb * 1024 > tope) { if (res.avisos.indexOf("tope") < 0) res.avisos.push("tope"); return; }
+      const b = await bytesDeImagen(t.url);
+      hechos++;
+      if (b.error) {
+        res.soloUrl++;
+        res.fallos.push({ mod: t.base, url: t.url, motivo: b.error });
+      } else {
+        res.kb += b.kb;
+        if (b.recortada) res.recortadas++;
+        if (b.reintentos) res.reintentos += b.reintentos;
+        await escribir("imagenes/" + t.base + "/" + t.nombre + "." + extDe(t.url, b.tipo), b.datos);
+      }
+      if (hechos % 4 === 0 || hechos === trabajos.length || b.error) pinta();
+    });
+    await colaEscritura;
+    pinta();
     return res;
   }
 
@@ -1319,7 +1389,7 @@
     return out;
   }
 
-  /* ================= 7. ZIP (sin comprimir, sin dependencias) ================= */
+  /* ================= 7. ZIP y salida (sin comprimir, sin dependencias) ================= */
 
   function crc32(u8) {
     if (!crc32.tabla) {
@@ -1333,45 +1403,185 @@
     return (c ^ 0xFFFFFFFF) >>> 0;
   }
 
-  function hacerZip(archivos) {
-    const enc = new TextEncoder();
-    const partes = [], central = [];
-    let offset = 0;
-    const d = new Date();
-    const hora = ((d.getHours() << 11) | (d.getMinutes() << 5) | (d.getSeconds() >> 1)) & 0xFFFF;
-    const fecha = (((d.getFullYear() - 1980) << 9) | ((d.getMonth() + 1) << 5) | d.getDate()) & 0xFFFF;
-    for (const a of archivos) {
-      const nombre = enc.encode(a.nombre);
-      const datos = typeof a.datos === "string" ? enc.encode(a.datos) : a.datos;
-      const crc = crc32(datos);
-      const lh = new Uint8Array(30 + nombre.length);
-      const v = new DataView(lh.buffer);
-      v.setUint32(0, 0x04034b50, true); v.setUint16(4, 20, true); v.setUint16(6, 0x0800, true); v.setUint16(8, 0, true);
-      v.setUint16(10, hora, true); v.setUint16(12, fecha, true); v.setUint32(14, crc, true);
-      v.setUint32(18, datos.length, true); v.setUint32(22, datos.length, true);
-      v.setUint16(26, nombre.length, true); v.setUint16(28, 0, true);
-      lh.set(nombre, 30);
-      partes.push(lh, datos);
+  function dosDe(d) {
+    return {
+      hora: ((d.getHours() << 11) | (d.getMinutes() << 5) | (d.getSeconds() >> 1)) & 0xFFFF,
+      fecha: (((d.getFullYear() - 1980) << 9) | ((d.getMonth() + 1) << 5) | d.getDate()) & 0xFFFF,
+    };
+  }
 
-      const ch = new Uint8Array(46 + nombre.length);
-      const w = new DataView(ch.buffer);
-      w.setUint32(0, 0x02014b50, true); w.setUint16(4, 20, true); w.setUint16(6, 20, true); w.setUint16(8, 0x0800, true);
-      w.setUint16(10, 0, true); w.setUint16(12, hora, true); w.setUint16(14, fecha, true);
-      w.setUint32(16, crc, true); w.setUint32(20, datos.length, true); w.setUint32(24, datos.length, true);
-      w.setUint16(28, nombre.length, true); w.setUint32(42, offset, true);
-      ch.set(nombre, 46);
-      central.push(ch);
-      offset += lh.length + datos.length;
+  /* El ZIP se monta a trozos: cabecera local + bytes de cada archivo, y al
+     final el índice (cabeceras centrales + fin). Gracias a eso puedo escribirlo
+     en memoria (Blob) o DIRECTAMENTE EN DISCO con la File System Access API,
+     que es lo que permite lotes de cientos de MB sin que se caiga la pestaña.
+     (La idea de escribir el .zip a disco está cogida del laboratorio de
+     userscripts del dueño, que empaqueta así una búsqueda entera.) */
+  function zipero(escritor, marca) {
+    const centrales = [];
+    let offset = 0, n = 0, centBytes = 0;
+    const enc = new TextEncoder();
+    return {
+      add: async function (nombre, datos) {
+        const u8 = typeof datos === "string" ? enc.encode(datos) : (datos instanceof Uint8Array ? datos : new Uint8Array(datos));
+        const nb = enc.encode(String(nombre));
+        const crc = crc32(u8);
+        const lh = new Uint8Array(30 + nb.length);
+        const v = new DataView(lh.buffer);
+        v.setUint32(0, 0x04034b50, true); v.setUint16(4, 20, true); v.setUint16(6, 0x0800, true); v.setUint16(8, 0, true);
+        v.setUint16(10, marca.hora, true); v.setUint16(12, marca.fecha, true); v.setUint32(14, crc, true);
+        v.setUint32(18, u8.length, true); v.setUint32(22, u8.length, true);
+        v.setUint16(26, nb.length, true); v.setUint16(28, 0, true);
+        lh.set(nb, 30);
+        const ch = new Uint8Array(46 + nb.length);
+        const w = new DataView(ch.buffer);
+        w.setUint32(0, 0x02014b50, true); w.setUint16(4, 20, true); w.setUint16(6, 20, true); w.setUint16(8, 0x0800, true);
+        w.setUint16(10, 0, true); w.setUint16(12, marca.hora, true); w.setUint16(14, marca.fecha, true);
+        w.setUint32(16, crc, true); w.setUint32(20, u8.length, true); w.setUint32(24, u8.length, true);
+        w.setUint16(28, nb.length, true); w.setUint32(42, offset, true);
+        ch.set(nb, 46);
+        await escritor.write(lh);
+        if (u8.length) await escritor.write(u8);
+        centrales.push(ch);
+        centBytes += ch.length;
+        offset += lh.length + u8.length;
+        n++;
+        return u8.length;
+      },
+      cerrar: async function () {
+        for (const ch of centrales) await escritor.write(ch);
+        const eo = new Uint8Array(22);
+        const e = new DataView(eo.buffer);
+        e.setUint32(0, 0x06054b50, true);
+        e.setUint16(8, Math.min(n, 0xFFFF), true); e.setUint16(10, Math.min(n, 0xFFFF), true);
+        e.setUint32(12, centBytes, true); e.setUint32(16, offset, true);
+        await escritor.write(eo);
+        const salida = await escritor.close();
+        return { archivos: n, bytes: offset + centBytes + 22, salida: salida };
+      },
+      get archivos() { return n; },
+      get bytes() { return offset + centBytes + 22; },
+    };
+  }
+
+  function escritorMemoria() {
+    const trozos = [];
+    let vivo = true;
+    return {
+      write: (c) => { if (vivo) trozos.push(c); return Promise.resolve(); },
+      close: () => { vivo = false; return Promise.resolve(new Blob(trozos, { type: "application/zip" })); },
+      abort: () => { trozos.length = 0; vivo = false; return Promise.resolve(); },
+    };
+  }
+
+  /* hacerZip sigue existiendo (API y pruebas): devuelve un Blob en memoria */
+  async function hacerZip(archivos) {
+    const esc = escritorMemoria();
+    const z = zipero(esc, dosDe(new Date()));
+    for (const a of archivos || []) await z.add(a.nombre, a.datos);
+    const r = await z.cerrar();
+    return r.salida;
+  }
+
+  /* ---------- dónde se guarda: memoria, un .zip en disco o una carpeta ---------- */
+
+  const HAY_GUARDAR = typeof window.showSaveFilePicker === "function";
+  const HAY_CARPETA = typeof window.showDirectoryPicker === "function";
+
+  function modoSalida() {
+    const s = panel.querySelector("#bovSalida");
+    return (s && s.value) || "memoria";
+  }
+
+  function pintaSalida() {
+    const d = panel.querySelector("#bovSalidaNota");
+    if (!d) return;
+    const m = modoSalida();
+    if (m === "disco" && !HAY_GUARDAR) d.textContent = "este navegador no sabe escribir en disco: se hará en memoria (en Chrome o Edge sí)";
+    else if (m === "carpeta" && !HAY_CARPETA) d.textContent = "este navegador no sabe escribir carpetas: se hará en memoria (en Chrome o Edge sí)";
+    else if (m === "memoria") d.textContent = "en memoria, con tope de " + Math.round(PESO_MAX_TOTAL / 1048576) + " MB";
+    else d.textContent = "sin tope de peso · " + (m === "carpeta" ? "si lo repites, salta lo que ya esté" : "si lo cortas, queda un .zip válido con lo bajado");
+  }
+
+  /* Se llama EN EL CLIC (el diálogo de archivos necesita el gesto del usuario)
+     y devuelve un objeto con meter()/cerrar()/abortar(). Devuelve null si el
+     dueño cancela el diálogo. */
+  async function abrirSalida(di) {
+    const modo = modoSalida();
+    const nombreZip = "creations_todo_" + sello() + ".zip";
+    const marca = dosDe(new Date());
+
+    if (modo === "disco" && HAY_GUARDAR) {
+      let h = null;
+      try {
+        h = await window.showSaveFilePicker({ id: "boveda-zip", suggestedName: nombreZip, types: [{ description: "ZIP", accept: { "application/zip": [".zip"] } }] });
+      } catch (e) {
+        if (e && e.name === "AbortError") return null;
+        if (di) di("No pude abrir el archivo (" + ((e && e.message) || e) + "): lo hago en memoria.");
+        h = null;
+      }
+      if (h) {
+        const w = await h.createWritable();
+        const z = zipero({ write: (c) => w.write(c), close: () => w.close(), abort: () => { try { return w.abort(); } catch (e) { return Promise.resolve(); } } }, marca);
+        const sal = { tipo: "disco", nombre: h.name || nombreZip, tope: Infinity, escritos: 0, bytes: 0, saltados: 0 };
+        sal.meter = async (n, d) => { const b = await z.add(n, d); sal.escritos++; sal.bytes += b; return true; };
+        sal.cerrar = async () => { const r = await z.cerrar(); sal.bytes = r.bytes; return r; };
+        sal.abortar = async () => { try { await z.cerrar(); } catch (e) {} };
+        return sal;
+      }
     }
-    let nDatos = 0, nCent = 0;
-    for (const t of partes) nDatos += t.length;
-    for (const t of central) nCent += t.length;
-    const eo = new Uint8Array(22);
-    const e = new DataView(eo.buffer);
-    e.setUint32(0, 0x06054b50, true);
-    e.setUint16(8, archivos.length, true); e.setUint16(10, archivos.length, true);
-    e.setUint32(12, nCent, true); e.setUint32(16, nDatos, true);
-    return new Blob([...partes, ...central, eo], { type: "application/zip" });
+
+    if (modo === "carpeta" && HAY_CARPETA) {
+      let dir = null;
+      try {
+        dir = await window.showDirectoryPicker({ id: "boveda-imagenes", mode: "readwrite" });
+      } catch (e) {
+        if (e && e.name === "AbortError") return null;
+        if (di) di("No pude abrir la carpeta (" + ((e && e.message) || e) + "): lo hago en memoria.");
+        dir = null;
+      }
+      if (dir) {
+        const cajas = new Map();
+        const bajar = async (partes) => {
+          const llave = partes.join("/");
+          if (cajas.has(llave)) return cajas.get(llave);
+          let h = dir;
+          for (const q of partes) h = await h.getDirectoryHandle(q, { create: true });
+          cajas.set(llave, h);
+          return h;
+        };
+        const sal = { tipo: "carpeta", nombre: (dir.name || "carpeta") + "/", tope: Infinity, escritos: 0, bytes: 0, saltados: 0 };
+        sal.meter = async (n, d) => {
+          const partes = String(n).split("/");
+          const fichero = partes.pop();
+          const h = partes.length ? await bajar(partes) : dir;
+          /* Los ficheros grandes (las imágenes) no se repiten si ya están: así
+             una segunda pasada continúa donde se quedó. Los índices y el LEEME
+             sí se reescriben, que son cuatro letras y pueden haber cambiado. */
+          const repetible = String(n).indexOf("imagenes/") === 0;
+          if (repetible) {
+            try { await h.getFileHandle(fichero); sal.saltados++; return false; } catch (e) {}
+          }
+          const fh = await h.getFileHandle(fichero, { create: true });
+          const w = await fh.createWritable();
+          await w.write(d);
+          await w.close();
+          sal.escritos++;
+          sal.bytes += (typeof d === "string" ? d.length : (d.length || 0));
+          return true;
+        };
+        sal.cerrar = async () => ({ archivos: sal.escritos, bytes: sal.bytes });
+        sal.abortar = async () => {};
+        return sal;
+      }
+    }
+
+    const esc = escritorMemoria();
+    const z = zipero(esc, marca);
+    const sal = { tipo: "memoria", nombre: nombreZip, tope: PESO_MAX_TOTAL, escritos: 0, bytes: 0, saltados: 0, blob: null };
+    sal.meter = async (n, d) => { const b = await z.add(n, d); sal.escritos++; sal.bytes += b; return true; };
+    sal.cerrar = async () => { const r = await z.cerrar(); sal.blob = r.salida; sal.bytes = r.bytes; return r; };
+    sal.abortar = async () => { try { await z.cerrar(); } catch (e) {} };
+    return sal;
   }
 
   /* ================= 8. entrega ================= */
@@ -1510,6 +1720,12 @@
       '<option value="webp">webp (pesa menos)</option>' +
       '<option value="png">png (pesa más)</option>' +
     '</select></label></div>' +
+    '<div class="fila"><label>salida <select id="bovSalida">' +
+      '<option value="memoria" selected>ZIP en memoria (normal)</option>' +
+      '<option value="disco">ZIP a disco (lotes grandes)</option>' +
+      '<option value="carpeta">carpeta con los archivos (se puede continuar)</option>' +
+    '</select></label></div>' +
+    '<div class="diag" id="bovSalidaNota"></div>' +
     '<div class="est">Abre la galería de mods y pulsa «Descargar TODO en un ZIP».</div>' +
     '<div class="pie"><button class="liga" type="button" data-a="parar" hidden>parar</button><button class="liga" type="button" data-a="vaciar">vaciar JSON</button></div>' +
     '<a id="bovZip" class="liga zip" download hidden></a>' +
@@ -1588,6 +1804,9 @@
   }
   avisoJson();
   pintaDiag();
+  pintaSalida();
+  const selSalida = panel.querySelector("#bovSalida");
+  if (selSalida) selSalida.addEventListener("change", pintaSalida);
 
   let ultima = "";
   let ocupado = false;
@@ -1686,85 +1905,107 @@
     }
 
     if (a === "zip") {
+      if (ocupado) { di("Estoy en algo, dame un momento."); return; }
+      /* El diálogo de archivos se pide AQUÍ, en el clic: después de un rato
+         rastreando, el navegador ya no deja enseñarlo. */
+      const salida = await abrirSalida(di);
+      if (!salida) { di("Cancelado: no elegiste dónde guardarlo."); return; }
       await tarea(async () => {
-        di("Paso 1/4 · rastreando la galería…");
-        await dormir(30);
-        const lista = await rastrear((p, mods) => di("Paso 1/4 · lista <b>" + p + "</b> · <b>" + mods + "</b> mods"));
-        if (lista.error) {
-          di("<b>Necesito la galería.</b><br>" + lista.error + "<br>Si no sale, pulsa «Ver peticiones (sondeo)» y mándame lo que descargue.");
-          return;
-        }
-        if (!lista.mods.length) { di("La lista vino vacía. ¿Estás en la galería de mods?"); return; }
+        try {
+          di("Paso 1/4 · rastreando la galería…");
+          await dormir(30);
+          const lista = await rastrear((p, mods) => di("Paso 1/4 · lista <b>" + p + "</b> · <b>" + mods + "</b> mods"));
+          if (lista.error) {
+            di("<b>Necesito la galería.</b><br>" + lista.error + "<br>Si no sale, pulsa «Ver peticiones (sondeo)» y mándame lo que descargue.");
+            await salida.abortar();
+            return;
+          }
+          if (!lista.mods.length) { di("La lista vino vacía. ¿Estás en la galería de mods?"); await salida.abortar(); return; }
 
-        if (control.parar) { di("Parado en el paso 1."); return; }
+          if (control.parar) { di("Parado en el paso 1."); await salida.abortar(); return; }
 
-        /* Las fichas: si el dueño no ha abierto ninguna, la plantilla no está
-           capturada, así que la busco yo tantenado las direcciones típicas. */
-        let modelo = modeloDetalle();
-        if (!modelo) {
-          di("Paso 2/4 · sin plantilla de ficha: la busco yo…");
-          modelo = await tantearFicha(lista, di);
-        }
-        di("Paso 2/4 · entrando en la ficha de <b>" + lista.mods.length + "</b> mods…");
-        const fichas = await bajarFichas(lista.mods, (hechos, total, ok, fase) =>
-          di("Paso 2/4 · ficha <b>" + hechos + "</b>/" + total + " · <b>" + ok + "</b> con datos"), control, modelo);
+          /* Las fichas: si el dueño no ha abierto ninguna, la plantilla no está
+             capturada, así que la busco yo tanteando las direcciones típicas. */
+          let modelo = modeloDetalle();
+          if (!modelo) {
+            di("Paso 2/4 · sin plantilla de ficha: la busco yo…");
+            modelo = await tantearFicha(lista, di);
+          }
+          di("Paso 2/4 · entrando en la ficha de <b>" + lista.mods.length + "</b> mods…");
+          const fichas = await bajarFichas(lista.mods, (hechos, total, ok, fase) =>
+            di("Paso 2/4 · ficha <b>" + hechos + "</b>/" + total + " · <b>" + ok + "</b> con datos"), control, modelo);
 
-        /* Si las fichas fallan, el ZIP sale igual: este botón nunca debe
-           devolver un JSON suelto. Se avisa y se sigue. */
-        const avisos = [];
-        if (fichas.error) {
-          avisos.push(fichas.error);
-          di("<b>Sigo sin las fichas.</b> " + fichas.error + "<br>El ZIP sale igual, con la lista, el catálogo y las imágenes. Espera…");
-          await dormir(1600);
-        }
-        if (fichas.fallos.length) avisos.push(fichas.fallos.length + " fichas no se pudieron bajar (están en fichas/_fallos.json).");
+          /* Si las fichas fallan, el ZIP sale igual: este botón nunca debe
+             devolver un JSON suelto. Se avisa y se sigue. */
+          const avisos = [];
+          if (fichas.error) {
+            avisos.push(fichas.error);
+            di("<b>Sigo sin las fichas.</b> " + fichas.error + "<br>El ZIP sale igual, con la lista, el catálogo y las imágenes. Espera…");
+            await dormir(1600);
+          }
+          if (fichas.fallos.length) avisos.push(fichas.fallos.length + " fichas no se pudieron bajar (están en fichas/_fallos.json).");
 
-        const modoImg = modoImagenes();
-        let imagenes = null;
-        if (modoImg > 0) {
-          try { imagenes = await juntarImagenes(lista, fichas, modoImg, control, di); }
-          catch (e) { di("Las imágenes se cortaron: " + ((e && e.message) || e) + " · sigo con el resto."); await dormir(1200); }
-          if (control.parar) di("Imágenes paradas por ti.");
+          const modoImg = modoImagenes();
+          let imagenes = null;
+          if (modoImg > 0) {
+            try { imagenes = await juntarImagenes(lista, fichas, modoImg, control, di, salida); }
+            catch (e) { di("Las imágenes se cortaron: " + ((e && e.message) || e) + " · sigo con el resto."); await dormir(1200); }
+            if (control.parar) di("Imágenes paradas por ti.");
+          }
+
+          di("Paso 4/4 · cerrando el índice…");
+          await dormir(30);
+          const metido = (nombre, datos) => salida.meter(nombre, datos);
+          await metido("LEEME.txt", escribirLeeme(lista, fichas, avisos, modoImg));
+          await metido("indice.json", JSON.stringify({ info: lista.info, avisos: avisos, salida: { tipo: salida.tipo, nombre: salida.nombre }, fichas: { plantilla: fichas.modelo, ok: fichas.hechas.length, fallos: fichas.fallos.length }, imagenes: { modo: modoImg, ok: imagenes ? imagenes.hechas : 0, saltadas: imagenes ? imagenes.saltados : 0, formato: imagenes ? imagenes.formato : "" }, capturado: new Date().toISOString() }, null, 1));
+          await metido("catalogo.json", JSON.stringify(catalogoDeLista(lista), null, 1));
+          await metido("lista/mods.json", JSON.stringify(lista.mods, null, 1));
+          for (const pg of lista.crudo) await metido("lista/pagina-" + String(pg.pagina).padStart(4, "0") + ".json", JSON.stringify(pg.json, null, 1));
+          const usados = new Set();
+          let nf = 0;
+          for (const f of fichas.hechas) {
+            const m = hallarMod(lista.mods, f.mod);
+            let base = limpiarTitulo((m && (m.name || m.title)) || f.mod, 60);
+            if (usados.has(base)) base = base + "_" + (nf++);
+            usados.add(base);
+            await metido("fichas/" + base + ".json", JSON.stringify(f.json, null, 1));
+          }
+          if (fichas.fallos.length) await metido("fichas/_fallos.json", JSON.stringify(fichas.fallos, null, 1));
+          if (avisos.length) await metido("INCIDENCIAS.txt", avisos.join("\n\n"));
+          if (imagenes) {
+            await metido("imagenes/_urls.json", JSON.stringify({ modo: modoImg, formato: imagenes.formato, conImagen: imagenes.mods, bajadas: imagenes.hechas, saltadas: imagenes.saltados, soloUrl: imagenes.soloUrl, reintentos: imagenes.reintentos, fallos: imagenes.fallos, avisos: imagenes.avisos, mods: imagenes.urls }, null, 1));
+            await metido("imagenes/_medios.json", JSON.stringify(imagenes.medios && Object.keys(imagenes.medios).length ? imagenes.medios : indiceMediosDeLista(lista.mods), null, 1));
+          }
+
+          const r = await salida.cerrar();
+          if (salida.tipo === "memoria" && salida.blob) {
+            descargarBlob(salida.blob, salida.nombre);
+            enlaceZip(salida.blob, salida.nombre);
+          } else {
+            const a2 = panel.querySelector("#bovZip");
+            if (a2) a2.hidden = true;
+          }
+          const mb = Math.round(((r && r.bytes) || salida.bytes) / 104857.6) / 10;
+          const donde = salida.tipo === "disco" ? "Guardado en disco: <b>" + salida.nombre + "</b>"
+            : (salida.tipo === "carpeta" ? "Guardado en la carpeta <b>" + salida.nombre + "</b>" : "Descargado: <b>" + salida.nombre + "</b>");
+          di("<b>" + lista.mods.length + "</b> mods · <b>" + fichas.hechas.length + "</b> fichas · " +
+            (fichas.fallos.length ? "<b>" + fichas.fallos.length + "</b> fallos · " : "") +
+            (imagenes ? "<b>" + imagenes.hechas + "</b> imágenes" + (imagenes.saltados ? " (+" + imagenes.saltados + " ya estaban)" : "") + " (" + (Math.round(imagenes.kb / 102.4) / 10) + " MB" + (imagenes.soloUrl ? ", <b>" + imagenes.soloUrl + "</b> sin poder bajar" : "") + (imagenes.reintentos ? ", " + imagenes.reintentos + " con reintento" : "") + ") · " : "") +
+            "<b>" + ((r && r.archivos) || salida.escritos) + "</b> archivos · " + mb + " MB<br>" + donde +
+            (imagenes && imagenes.soloUrl && !imagenes.hechas && !HAY_GM ? "<br><b style='color:#e8a0a0'>Las imágenes no se pueden bajar sin GM_xmlhttpRequest</b>: el CDN de Bethesda no manda CORS. Instala/activa Tampermonkey y vuelve a lanzarlo." : "") +
+            (avisos.length ? "<br><span style='color:#e8a0a0'>Con incidencias:</span> " + avisos.join(" ") : "") +
+            (imagenes && imagenes.avisos.indexOf("tope") > -1 ? "<br>Ojo: paré las imágenes al llegar al tope de peso (" + Math.round(PESO_MAX_TOTAL / 1048576) + " MB). Pon «salida · ZIP a disco» y no hay tope." : "") +
+            (control.parar ? "<br><span style='color:#e8a0a0'>Lo paraste tú:</span> " + (salida.tipo === "memoria" ? "no se guardó nada." : "lo que había se quedó guardado y el paquete se cerró bien.") : "") +
+            (salida.tipo === "memoria" ? "<br>Si no lo ves en tus descargas, dale al enlace de abajo." : ""));
+        } catch (e) {
+          /* Si revienta a mitad, se cierra igual: en disco queda un paquete
+             válido con todo lo que se había bajado (nada de perderlo). */
+          try { await salida.cerrar(); } catch (e2) {}
+          di("<b>Se cortó a mitad.</b> " + ((e && e.message) || e) +
+            (salida.tipo === "memoria" ? "" : "<br>Lo que ya se había bajado queda en <b>" + salida.nombre + "</b> y se puede abrir."));
         }
-        di("Paso 4/4 · empaquetando el ZIP…");
-        await dormir(50);
-        const archivos = [];
-        archivos.push({ nombre: "LEEME.txt", datos: escribirLeeme(lista, fichas, avisos, modoImg) });
-        archivos.push({ nombre: "indice.json", datos: JSON.stringify({ info: lista.info, avisos: avisos, fichas: { plantilla: fichas.modelo, ok: fichas.hechas.length, fallos: fichas.fallos.length }, imagenes: { modo: modoImg, ok: imagenes ? imagenes.hechas : 0 }, capturado: new Date().toISOString() }, null, 1) });
-        archivos.push({ nombre: "lista/mods.json", datos: JSON.stringify(lista.mods, null, 1) });
-        lista.crudo.forEach((p) => archivos.push({ nombre: "lista/pagina-" + String(p.pagina).padStart(4, "0") + ".json", datos: JSON.stringify(p.json, null, 1) }));
-        archivos.push({ nombre: "catalogo.json", datos: JSON.stringify(catalogoDeLista(lista), null, 1) });
-        const usados = new Set();
-        fichas.hechas.forEach((f, i) => {
-          const m = hallarMod(lista.mods, f.mod);
-          let base = limpiarTitulo((m && (m.name || m.title)) || f.mod, 60);
-          if (usados.has(base)) base = base + "_" + i;
-          usados.add(base);
-          archivos.push({ nombre: "fichas/" + base + ".json", datos: JSON.stringify(f.json, null, 1) });
-        });
-        if (fichas.fallos.length) archivos.push({ nombre: "fichas/_fallos.json", datos: JSON.stringify(fichas.fallos, null, 1) });
-        if (avisos.length) archivos.push({ nombre: "INCIDENCIAS.txt", datos: avisos.join("\n\n") });
-        if (imagenes) {
-          for (const a of imagenes.archivos) archivos.push(a);
-          archivos.push({ nombre: "imagenes/_urls.json", datos: JSON.stringify({ modo: modoImg, formato: imagenes.formato, conImagen: imagenes.mods, bajadas: imagenes.hechas, soloUrl: imagenes.soloUrl, fallos: imagenes.fallos, avisos: imagenes.avisos, mods: imagenes.urls }, null, 1) });
-          archivos.push({ nombre: "imagenes/_medios.json", datos: JSON.stringify(imagenes.medios && Object.keys(imagenes.medios).length ? imagenes.medios : indiceMediosDeLista(lista.mods), null, 1) });
-        }
-        let blob = null;
-        try { blob = hacerZip(archivos); }
-        catch (e) { di("<b>No pude montar el ZIP</b> (" + ((e && e.message) || e) + ").<br>Pon «imágenes: ninguna» y vuelve a probar: así pesa mucho menos."); return; }
-        const nombre = "creations_todo_" + sello() + ".zip";
-        descargarBlob(blob, nombre);
-        enlaceZip(blob, nombre);
-        const mb = Math.round(blob.size / 104857.6) / 10;
-        di("<b>" + lista.mods.length + "</b> mods · <b>" + fichas.hechas.length + "</b> fichas · " +
-          (fichas.fallos.length ? "<b>" + fichas.fallos.length + "</b> fallos · " : "") +
-          (imagenes ? "<b>" + imagenes.hechas + "</b> imágenes (" + Math.round(imagenes.kb / 1024) + " MB" + (imagenes.soloUrl ? ", <b>" + imagenes.soloUrl + "</b> sin poder bajar" : "") + ") · " : "") +
-          "<b>" + archivos.length + "</b> archivos en el ZIP · " + mb + " MB<br>Descargado: <b>" + nombre + "</b>" +
-          (imagenes && imagenes.soloUrl && !imagenes.hechas && !HAY_GM ? "<br><b style='color:#e8a0a0'>Las imágenes no se pueden bajar sin GM_xmlhttpRequest</b>: el CDN de Bethesda no manda CORS. Instala/activa Tampermonkey y vuelve a lanzarlo." : "") +
-          (avisos.length ? "<br><span style='color:#e8a0a0'>Con incidencias:</span> " + avisos.join(" ") : "") +
-          (imagenes && imagenes.avisos.indexOf("tope") > -1 ? "<br>Ojo: paré las imágenes al llegar al tope de peso (" + Math.round(PESO_MAX_TOTAL / 1048576) + " MB)." : "") +
-          "<br>Si no lo ves en tus descargas, dale al enlace de abajo.");
       });
+      return;
     }
   });
 
@@ -1820,7 +2061,7 @@
   } else montar();
 
   WIN.__bovedaCapturaAPI = {
-    version: "2.1",
+    version: "2.2",
     panel, pill,
     capturar: capturaPantalla,
     capturarTodo: capturaTotal,
@@ -1841,6 +2082,9 @@
     imagenesDeFicha,
     bytesDeImagen,
     juntarImagenes,
+    abrirSalida,
+    zipero,
+    salidaForzada: null,
     indiceMedios,
     indiceMediosDeLista,
     catalogoDeLista,
@@ -1848,6 +2092,10 @@
     mediosDeMod,
     tantearFicha,
     hayGM: () => HAY_GM,
+    hayGuardar: () => HAY_GUARDAR,
+    hayCarpeta: () => HAY_CARPETA,
+    modoSalida,
+    pintaSalida,
     modoImagenes,
     calidadImagenes,
     urlDeFicha,
