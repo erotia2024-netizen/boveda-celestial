@@ -1,9 +1,9 @@
 {
   "app": "boveda-celestial",
   "v": 1,
-  "actualizado": "2026-09-20T01:54:50.259Z",
+  "actualizado": "2026-09-20T01:55:35.658Z",
   "resumen": {
-    "catalogo": 859,
+    "catalogo": 857,
     "mios": 0,
     "capturas": 0,
     "build": 0,
@@ -3303,21 +3303,6 @@
       "adult": false,
       "autor": "ImperialAgent1992",
       "nota": "Guardabosques de Falkreath como seguidor.",
-      "img": "",
-      "idioma": ""
-    },
-    {
-      "nombre": "IA92's No Spell Charge",
-      "id": 0,
-      "dl": 0.256,
-      "mb": 0,
-      "deps": 0,
-      "fam": "Ninguna",
-      "cat": "Gameplay",
-      "plat": "PS4+PS5",
-      "adult": false,
-      "autor": "ImperialAgent1992",
-      "nota": "Los hechizos no se cargan.",
       "img": "",
       "idioma": ""
     },
@@ -9888,21 +9873,6 @@
       "adult": false,
       "autor": "ImperialAgent1992",
       "nota": "Manada de cinco lobos con alfa que te acompaña y aparece donde estés.",
-      "img": "",
-      "idioma": ""
-    },
-    {
-      "nombre": "Limitless Atronach Summon",
-      "id": 0,
-      "dl": 0.077,
-      "mb": 0,
-      "deps": 0,
-      "fam": "Ninguna",
-      "cat": "Gameplay",
-      "plat": "PS4+PS5",
-      "adult": false,
-      "autor": "ImperialAgent1992",
-      "nota": "Quita el tope de Almas Gemelas: invoca tantos atronach como quieras.",
       "img": "",
       "idioma": ""
     },
