@@ -1,9 +1,9 @@
 {
   "app": "boveda-celestial",
   "v": 1,
-  "actualizado": "2026-09-20T03:02:24.311Z",
+  "actualizado": "2026-09-20T03:22:10.009Z",
   "resumen": {
-    "catalogo": 1082,
+    "catalogo": 1084,
     "mios": 0,
     "capturas": 0,
     "build": 0,
@@ -16248,6 +16248,36 @@
       "adult": false,
       "autor": "toaDime",
       "nota": "Ilumina la vista cuando juegas en forma de Señor Vampiro.",
+      "img": "",
+      "idioma": ""
+    },
+    {
+      "nombre": "Re-Color Project All Generic Jewelry",
+      "id": 0,
+      "dl": 0.134,
+      "mb": 0,
+      "deps": 0,
+      "fam": "Ninguna",
+      "cat": "Models and Textures",
+      "plat": "PS4+PS5",
+      "adult": false,
+      "autor": "Cyan49",
+      "nota": "Recolorea toda la joyería genérica del juego: solo cambia el color, no añade anillos nuevos.",
+      "img": "",
+      "idioma": ""
+    },
+    {
+      "nombre": "Recolored Jewelry Integration",
+      "id": 0,
+      "dl": 0.038,
+      "mb": 0,
+      "deps": 1,
+      "fam": "Ninguna",
+      "cat": "Patches",
+      "plat": "PS4+PS5",
+      "adult": false,
+      "autor": "Cyan49",
+      "nota": "Integra 185 anillos y 102 diademas recoloreados en las listas de botín. Pide Recolored Replica v13 o superior.",
       "img": "",
       "idioma": ""
     }
